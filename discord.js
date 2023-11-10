@@ -10,6 +10,37 @@ const client = new Client({
       ]
 })
 
+const { EmbedBuilder } = require('discord.js');
+
+function embedBuild(title, author, icon) {
+    var result = new EmbedBuilder()
+    .setColor(0x4D4DA8)
+    .setTitle(title == undefined ? '\u200b' : title)
+    .setAuthor({ name: (author == undefined ? 'Galaxy_Bot' : author), iconURL: 'https://i.postimg.cc/zG02dQCf/1690782447163.jpg' })
+    .setThumbnail((icon == undefined ? 'https://i.postimg.cc/zG02dQCf/1690782447163.jpg' : icon));
+    return result;
+}
+/*
+
+const exampleEmbed = new EmbedBuilder()
+	.setColor(0x0099FF)
+	.setTitle('Some title')
+	.setURL('https://discord.js.org/')
+	.setAuthor({ name: 'Some name', iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
+	.setDescription('Some description here')
+	.setThumbnail('https://i.imgur.com/AfFp7pu.png')
+	.addFields(
+		{ name: 'Regular field title', value: 'Some value here' },
+		{ name: '\u200B', value: '\u200B' },
+		{ name: 'Inline field title', value: 'Some value here', inline: true },
+		{ name: 'Inline field title', value: 'Some value here', inline: true },
+	)
+	.addFields({ name: 'Inline field title', value: 'Some value here', inline: true })
+	.setImage('https://i.imgur.com/AfFp7pu.png')
+	.setTimestamp()
+	.setFooter({ text: 'Some footer text here', iconURL: 'https://i.imgur.com/AfFp7pu.png' });
+    */
+
 const fs = require('fs');
 const FileStream = {
 write: function(path, str) {
@@ -54,7 +85,7 @@ try {
  }
 };
 
-var token = '여기가 토큰 값 설정이에요!';
+var token = '토큰 설정해줘요 >ㅁ<';
 
 client.login(token)
 
@@ -75,7 +106,7 @@ function checkList(event) {
         result += '[ No.'+jk+' ] '+recentRequest[jk].name+'\nID : '+recentRequest[jk].id+'\n요청시간: '+timestamp(recentRequest[jk].timestamp)+'\n\n';
     }
     if(event == undefined) console.log(result); else {
-        event.reply(result);
+        event.channel.send(result);
     }
 }
 
@@ -116,18 +147,26 @@ client.on('messageCreate', (event) => {
     var user = event.author;
     var sender = user.username;
     var userId = user.id;
-    if(msg == '*아이디') {
-        event.reply("your Id: "+userId);
+    if(user.bot) return;
+    if(msg == ';ping') {
+        var sT = Date.now();
+        FileStream.write('sdcard/ping.ping','react!');
+        event.channel.send(embedS('pong, '+(Date.now() - sT)+'ms!'));
     }
-    if(msg.startsWith('*콘솔 ')) {
+    /*
+    if(msg.startsWith(';콘솔 ')) {
         event.reply('전송됨!');
         console.log(msg.slice(4));
     }
-    if(msg == '*신청목록') {
+    */
+   function embedS(text, author, imageURL) {
+     return { embeds:[embedBuild(text, author, imageURL)] };
+   }
+    if(msg == ';신청목록') {
         event.reply('신청 목록을 콘솔에 띄웠어요!');
         checkList(event);
     }
-    if(msg == '*관리자신청') {
+    if(msg == ';관리자신청') {
         for(var cA of admin) {
             if(cA.id == userId) return event.reply('이미 관리자에요!');
         }
@@ -146,16 +185,19 @@ client.on('messageCreate', (event) => {
     for(var i=0; i<admin.length;i++) {
         if(admin[i].id == userId) check = true;
     }
-    if(msg.startsWith('*이발 ')) {
+    if(msg.startsWith(';이발 ')) {
         if(!check) return;
        var evalS = msg.slice(4);
        try{
-         event.reply(String(eval(evalS)));
+        var evalText = String(eval(evalS));
+         event.reply(evalText == '' ? 'null' : evalText);
        }catch(e) {
-        event.reply(String(e+'\n'+e.lineNumber));
+        try{
+        event.reply(String(e));
+        }catch(e) { event.reply('invaild Error'); }
        }
     }
-    if(msg.startsWith('*요청')) {
+    if(msg.startsWith(';신청')) {
         var type = msg.slice(3);
         var typeN = msg.slice(6);
         
