@@ -12,6 +12,8 @@ const client = new Client({
 
 const { EmbedBuilder } = require('discord.js');
 
+var client_id = '봇 클라 아이디 설정해죠';
+
 function embedBuild(title, author, icon) {
     var result = new EmbedBuilder()
     .setColor(0x4D4DA8)
@@ -20,6 +22,17 @@ function embedBuild(title, author, icon) {
     .setThumbnail((icon == undefined ? 'https://i.postimg.cc/zG02dQCf/1690782447163.jpg' : icon));
     return result;
 }
+
+function inviteBot() {
+    var result = new EmbedBuilder()
+    .setColor(0x4D4DA8)
+    .setTitle('봇을 초대하려면 여길 클릭하세요!')
+    .setURL(`https://discord.com/oauth2/authorize?client_id=${client_id}&scope=bot&permissions=68608`)
+    .setAuthor({ name:'Galaxy_Bot', iconURL: 'https://i.postimg.cc/zG02dQCf/1690782447163.jpg' })
+    .setThumbnail('https://i.postimg.cc/zG02dQCf/1690782447163.jpg');
+    return result;
+}
+
 /*
 
 const exampleEmbed = new EmbedBuilder()
@@ -85,7 +98,7 @@ try {
  }
 };
 
-var token = '토큰 설정해줘요 >ㅁ<';
+var token = '토큰 설정 해죠';
 
 client.login(token)
 
@@ -147,11 +160,15 @@ client.on('messageCreate', (event) => {
     var user = event.author;
     var sender = user.username;
     var userId = user.id;
+    var channel = event.channel;
     if(user.bot) return;
     if(msg == ';ping') {
         var sT = Date.now();
         FileStream.write('sdcard/ping.ping','react!');
         event.channel.send(embedS('pong, '+(Date.now() - sT)+'ms!'));
+    }
+    if(msg == ';봇초대') {
+        event.reply({ embeds:[inviteBot()] })
     }
     /*
     if(msg.startsWith(';콘솔 ')) {
@@ -161,6 +178,9 @@ client.on('messageCreate', (event) => {
     */
    function embedS(text, author, imageURL) {
      return { embeds:[embedBuild(text, author, imageURL)] };
+   }
+   function embedSend(text, author, image) {
+     return channel.send(embedS(text, author, image));
    }
     if(msg == ';신청목록') {
         event.reply('신청 목록을 콘솔에 띄웠어요!');
@@ -207,7 +227,7 @@ client.on('messageCreate', (event) => {
           acceptRequest(typeN).reply('관리자가 수락되었어요!');
        }
        if(type.startsWith('거절')) {
-        acceptRequest(typeN).reply('관리자가 거절되었어요!');
+        deacceptRequest(typeN).reply('관리자가 거절되었어요!');
      }
     }
 })
