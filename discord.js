@@ -12,7 +12,8 @@ const client = new Client({
 
 const { EmbedBuilder } = require('discord.js');
 
-var client_id = '봇 클라 아이디 설정해죠';
+var client_id = "봇 클라이언트 아이디 설정해죠!!";
+var token = "봇 토큰 설정해죠!! ";
 
 function embedBuild(title, author, icon) {
     var result = new EmbedBuilder()
@@ -27,7 +28,7 @@ function inviteBot() {
     var result = new EmbedBuilder()
     .setColor(0x4D4DA8)
     .setTitle('봇을 초대하려면 여길 클릭하세요!')
-    .setURL(`https://discord.com/oauth2/authorize?client_id=${client_id}&scope=bot&permissions=68608`)
+    .setURL(`https://discord.com/oauth2/authorize?client_id=${client_id}&scope=bot&permissions=8`) /* 68608 */
     .setAuthor({ name:'Galaxy_Bot', iconURL: 'https://i.postimg.cc/zG02dQCf/1690782447163.jpg' })
     .setThumbnail('https://i.postimg.cc/zG02dQCf/1690782447163.jpg');
     return result;
@@ -69,7 +70,7 @@ write: function(path, str) {
       console.error('cannot file open');
     }
   } catch (err) {
-    console.error('파일 쓰기 오류: ' + err);
+    return console.log(err.stack);
   }
  },
  read: function(filePath) {
@@ -93,12 +94,10 @@ try {
  }
 
 } catch (err) {
- console.error('( #'+err.lineNumber+' )파일 열기 오류:', err);
+ return null;
 }
  }
 };
-
-var token = '토큰 설정 해죠';
 
 client.login(token)
 
@@ -230,4 +229,84 @@ client.on('messageCreate', (event) => {
         deacceptRequest(typeN).reply('관리자가 거절되었어요!');
      }
     }
+    var room = channel.name;
+    var isGroupChat = !user.bot;
+    var replier = {
+        reply: function (str) {
+            event.channel.send(str);
+        },
+        repli: function (str) {
+            event.reply(str);
+        }
+    };
+    var imageDB = {
+       getProfileHash: function () {
+        return userId;
+       }
+    };
+    var packageName= 'dev.discord.client';
+    var chanId = channel.id;
+    response(room, msg, sender, isGroupChat, replier, imageDB, packageName, userId, chanId, user);
 })
+
+var upgrade = {};
+
+function response(room, msg, sender, isGroupChat, replier, imageDB, packageName, userId, chanId, mention) {
+    if(upgrade[chanId] == undefined) {
+        upgrade[chanId] = {};
+    }
+    var saveData = FileStream.read(`sdcard/up/${chanId}${userId}.dat`);
+    upgrade[chanId][userId] = (saveData == null ? {
+      name: sender,
+      id: userId,
+      up: 0,
+      dmg: 4,
+      timestamp: Date.now() - 10000
+    } : JSON.parse(saveData));
+    var chance = {
+      num: Math.random() * 100,
+      select: 0
+    };
+    chance.select = (50 < chance.num ? 1 : (1 < chance.num ? 0 : 2));
+    if(msg == ';검 랭킹') {
+      var rankData = [];
+      Object.keys(upgrade[chanId]).map(e => rankData.push(upgrade[chanId][e]));
+      rankData.sort(function(a, b) {
+        return b.up - a.up;
+      })
+      var result = '```\n[검 강화 랭킹 ]\n\n';
+      for(var i=0; (i < 5 && i < rankData.length); i++) {
+        result += (i+1)+'위. '+rankData[i].name+' ( '+rankData[i].up+'강 )\n\n'
+      }
+      replier.reply(result+'```');
+    }
+    if(msg == ';검 정보') {
+        replier.repli(`${mention}님의 검 정보:\n${upgrade[chanId][userId].up}강, 공격력: ${upgrade[chanId][userId].dmg}`)
+    }
+    if(msg == ';검 확률') {
+      replier.repli(`성공: 50%\n실패: 49%\n파괴 1%`)
+    }
+    if(msg == ';검 강화') {
+        if((Date.now() - upgrade[chanId][userId].timestamp) < 3333) return replier.repli('강화하는데엔 쿨타임이 있어!');
+        upgrade[chanId][userId].timestamp = Date.now();
+        if(chance.select == 1) {
+            upgrade[chanId][userId].up++;
+            upgrade[chanId][userId].dmg = Math.floor(upgrade[chanId][userId].dmg * 1.3);
+            FileStream.write(`sdcard/up/${chanId}${userId}.dat`,JSON.stringify(upgrade[chanId][userId]));
+            replier.repli(`${mention}님의 검 강화를 성공했어!\n${upgrade[chanId][userId].up}강, 공격력: ${upgrade[chanId][userId].dmg}`)
+        }
+        if(chance.select == 0) {
+            FileStream.write(`sdcard/up/${chanId}${userId}.dat`,JSON.stringify(upgrade[chanId][userId]));
+            replier.repli(`${mention}님의 검 강화를 실패했어!`)
+        }
+        if(chance.select == 2) {
+            upgrade[chanId][userId].up = 0;
+            upgrade[chanId][userId].dmg = 4;
+            FileStream.write(`sdcard/up/${chanId}${userId}.dat`,JSON.stringify(upgrade[chanId][userId]));
+            replier.repli(`${mention}님의 검이 파괴되었어!\n${upgrade[chanId][userId].up}강, 공격력: ${upgrade[chanId][userId].dmg}`)
+        }
+    }
+    if(msg == ';환경') {
+        replier.reply(`room: ${room}, msg: ${msg}, sender: ${sender}, isGroupChat: ${isGroupChat}, replier: ${replier}, imageDB: ${imageDB}, packageName: ${packageName}`);
+    }
+}
